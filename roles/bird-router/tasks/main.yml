@@ -1,0 +1,66 @@
+- name: Install EPEL
+  become: true
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install bird
+  become: true
+  yum:
+    name: bird
+    state: present
+
+- name: Create /etc/bird/ dir
+  become: true
+  file:
+    path: /etc/bird
+    state: directory
+
+- name: Update bird.conf
+  become: true
+  template:
+    src: ../templates/bird/bird.conf.j2
+    dest: /etc/bird/bird.conf
+    owner: root
+    group: wheel
+
+- name: Update local4.conf
+  become: true
+  template:
+    src: ../templates/bird/local4.conf.j2
+    dest: /etc/bird/local4.conf
+    owner: root
+    group: wheel
+
+- name: Create peers4 dir
+  become: true
+  file:
+    path: /etc/bird/peers4
+    state: directory
+
+- name: Create peers6 dir
+  become: true
+  file:
+    path: /etc/bird/peers6
+    state: directory
+
+- name: SymLink /etc/bird/bird.conf to /etc/bird.conf
+  become: true
+  raw: rm -rf /etc/bird.conf; ln -s /etc/bird/bird.conf /etc/bird.conf
+  ignore_errors: true
+
+- name: Create dn42 interface config file
+  become: true
+  template:
+    src: ../templates/bird/ifcfg-dn42.conf.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{dn42_ifname}}
+    owner: root
+    group: wheel
+
+- name: Restart network services
+  become: true
+  raw: systemctl restart network
+
+- name: Start Bird
+  become: true
+  raw: systemctl start bird
